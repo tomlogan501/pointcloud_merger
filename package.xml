@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package format="2">
+    <name>pointcloud_merger</name>
+    <version>0.0.1</version>
+    <description>Merge 2 pointcloud2s into one</description>
+
+    <maintainer email="thomas.simon@ensta-paris.com">Thomas SIMON</maintainer>
+    <license>BSD</license>
+
+    <buildtool_depend>catkin</buildtool_depend>
+
+    <depend>laser_geometry</depend>
+    <depend>message_filters</depend>
+    <depend>nodelet</depend>
+    <depend>roscpp</depend>
+    <depend>sensor_msgs</depend>
+    <depend>tf2</depend>
+    <depend>tf2_ros</depend>
+    <depend>tf2_sensor_msgs</depend>
+
+    <export>
+        <nodelet plugin="${prefix}/nodelets.xml"/>
+    </export>
+</package>

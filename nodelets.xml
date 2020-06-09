@@ -1,0 +1,12 @@
+<library path="lib/libpointcloud_merger">
+
+  <class name="pointcloud_merger/pointcloud_merger_nodelet"
+	 type="pointcloud_merger::PointCloudMergerNodelet"
+	 base_class_type="nodelet::Nodelet">
+    <description>
+      Nodelet to convert merge 2 pointclouds2 into one
+    </description>
+  </class>
+
+</library>
+

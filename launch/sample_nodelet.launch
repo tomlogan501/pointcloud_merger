@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+
+<launch>
+
+    <node pkg="nodelet" type="nodelet" name="pointcloud_merger_nodelet" args="load pointcloud_merger/pointcloud_merger_nodelet ">
+
+        <remap from="cloud_out" to="test_blabla"/>
+        <remap from="cloud1" to="ZED"/>
+        <remap from="cloud2" to="ZED2"/>
+        <rosparam>
+            target_frame: camera_link # Leave disabled to output scan in pointcloud frame
+
+            # Concurrency level, affects number of pointclouds queued for processing, thread number governed by nodelet manager
+            # 0 : Detect number of cores
+            # 1 : Single threaded
+            # 2->inf : Parallelism level
+            concurrency_level: 1
+        </rosparam>
+
+    </node>
+
+</launch>
