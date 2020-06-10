@@ -8,7 +8,7 @@ on:
 
 jobs:
 
-  build kinetic:
+  build_kinetic:
 
     runs-on: ubuntu-latest
 
@@ -17,7 +17,7 @@ jobs:
     - name: Build the Docker image kinetic
       run: docker build . --file docker/Dockerfile.kinetic --tag kinetic:$(date +%s)
 
-  build melodic:
+  build_melodic:
 
     runs-on: ubuntu-latest
 
