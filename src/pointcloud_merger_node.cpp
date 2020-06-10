@@ -1,5 +1,5 @@
 /*
- * Author: Thomas SIMON
+ *  Copyright [2020] Author: Thomas SIMON
  */
 
 #include <nodelet/loader.h>

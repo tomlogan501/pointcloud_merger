@@ -1,5 +1,5 @@
 /*
- * Author: Thomas SIMON
+ * Copyright [2020] Author: Thomas SIMON
  */
 
 #ifndef POINTCLOUD_MERGER_POINTCLOUD_MERGER_NODELET_H
@@ -17,10 +17,12 @@
 #include <tf2_ros/message_filter.h>
 #include <tf2_ros/transform_listener.h>
 
-namespace pointcloud_merger {
+namespace pointcloud_merger
+{
 typedef tf2_ros::MessageFilter<sensor_msgs::PointCloud2> MessageFilter;
 
-class PointCloudMergerNodelet : public nodelet::Nodelet {
+class PointCloudMergerNodelet : public nodelet::Nodelet
+{
 public:
   PointCloudMergerNodelet();
 
@@ -31,9 +33,9 @@ private:
   void cloudCb2(const sensor_msgs::PointCloud2ConstPtr &cloud_msg);
 
   void failureCb1(const sensor_msgs::PointCloud2ConstPtr &cloud_msg,
-                 tf2_ros::filter_failure_reasons::FilterFailureReason reason);
+                  tf2_ros::filter_failure_reasons::FilterFailureReason reason);
   void failureCb2(const sensor_msgs::PointCloud2ConstPtr &cloud_msg,
-                 tf2_ros::filter_failure_reasons::FilterFailureReason reason);
+                  tf2_ros::filter_failure_reasons::FilterFailureReason reason);
 
   void connectCb();
   void disconnectCb();
@@ -68,6 +70,6 @@ private:
   sensor_msgs::PointCloud2Ptr cloud2RW_;
 };
 
-} // namespace pointcloud_merger
+}  // namespace pointcloud_merger
 
-#endif // POINTCLOUD_MERGER_POINTCLOUD_MERGER_NODELET_H
+#endif  // POINTCLOUD_MERGER_POINTCLOUD_MERGER_NODELET_H
