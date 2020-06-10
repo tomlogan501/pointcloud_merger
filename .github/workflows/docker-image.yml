@@ -1,0 +1,27 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+
+  build kinetic:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build the Docker image kinetic
+      run: docker build . --file docker/Dockerfile.kinetic --tag kinetic:$(date +%s)
+
+  build melodic:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build the Docker image melodic
+      run: docker build . --file docker/Dockerfile.melodic --tag melodic:$(date +%s)
