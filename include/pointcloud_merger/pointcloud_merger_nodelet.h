@@ -7,6 +7,8 @@
 
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
+#include <boost/chrono.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <message_filters/subscriber.h>
 #include <nodelet/nodelet.h>
@@ -44,9 +46,11 @@ private:
 
   ros::NodeHandle nh_, private_nh_;
   ros::Publisher pub_;
-  boost::mutex connect_mutex_;
 
-  boost::mutex addition_mutex_;
+  boost::mutex connect_mutex_;
+  boost::mutex cloud1_mutex_;
+  boost::mutex cloud2_mutex_;
+
   boost::thread addition_thread_;
 
   boost::shared_ptr<tf2_ros::Buffer> tf2_;
@@ -68,6 +72,8 @@ private:
   // Internal clouds
   sensor_msgs::PointCloud2Ptr cloud1RW_;
   sensor_msgs::PointCloud2Ptr cloud2RW_;
+  int iSizeCloud1_;
+  int iSizeCloud2_;
 };
 
 }  // namespace pointcloud_merger
