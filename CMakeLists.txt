@@ -2,10 +2,10 @@ cmake_minimum_required(VERSION 2.8.3)
 project(pointcloud_merger)
 
 find_package(catkin REQUIRED COMPONENTS
-  laser_geometry
   message_filters
   nodelet
   roscpp
+  rospy
   sensor_msgs
   tf2
   tf2_ros
@@ -15,7 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES pointcloud_merger
-  CATKIN_DEPENDS laser_geometry message_filters nodelet roscpp sensor_msgs tf2 tf2_ros tf2_sensor_msgs
+  CATKIN_DEPENDS message_filters nodelet roscpp rospy sensor_msgs tf2 tf2_ros tf2_sensor_msgs
 )
 
 include_directories(
