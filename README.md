@@ -1,7 +1,7 @@
 # Pointcloud merger
 Package to combine 2 PointCloud2 in one with a target frame.
 
-![Docker Image CI kinetic/melodic](https://github.com/tomlogan501/robosense_simulator/workflows/Docker%20Image%20CI%20kinetic/melodic/badge.svg)
+![Docker Image CI](https://github.com/tomlogan501/pointcloud_merger/workflows/Docker%20Image%20CI/badge.svg)
 
 ![rviz screenshot](img/rviz.png)
 
