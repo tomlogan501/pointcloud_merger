@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <launch>
-    <node pkg="pointcloud_merger" type="pointcloud_merger_node" name="pointcloud_merger_node" >
+    <node pkg="pointcloud_merger" type="pointcloud_merger_node" name="pointcloud_merger_node" launch-prefix="xterm -e gdb --args">
 
         <remap from="cloud_out" to="cloud_out_merged"/>
 	<remap from="cloud1" to="/zed/depth/points"/>

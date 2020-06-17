@@ -50,6 +50,7 @@ private:
   boost::mutex connect_mutex_;
   boost::mutex cloud1_mutex_;
   boost::mutex cloud2_mutex_;
+  boost::mutex addition_mutex_;
 
   boost::thread addition_thread_;
 
@@ -72,8 +73,8 @@ private:
   // Internal clouds
   sensor_msgs::PointCloud2Ptr cloud1RW_;
   sensor_msgs::PointCloud2Ptr cloud2RW_;
-  int iSizeCloud1_;
-  int iSizeCloud2_;
+  int iSizeCloud1Max_;
+  int iSizeCloud2Max_;
 };
 
 }  // namespace pointcloud_merger
