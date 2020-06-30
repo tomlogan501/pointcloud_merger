@@ -18,6 +18,16 @@
     <depend>tf2</depend>
     <depend>tf2_ros</depend>
     <depend>tf2_sensor_msgs</depend>
+    <build_depend>rostest</build_depend>
+    <build_depend>pcl_conversions</build_depend>
+    <build_depend>pcl_ros</build_depend>
+    <build_export_depend>pcl_conversions</build_export_depend>
+    <build_export_depend>pcl_ros</build_export_depend>
+    <exec_depend>rostest</exec_depend>
+    <exec_depend>pcl_conversions</exec_depend>
+    <exec_depend>pcl_ros</exec_depend>
+    <build_depend>libpcl-all-dev</build_depend>
+    <exec_depend>libpcl-all</exec_depend>
 
     <export>
         <nodelet plugin="${prefix}/nodelets.xml"/>

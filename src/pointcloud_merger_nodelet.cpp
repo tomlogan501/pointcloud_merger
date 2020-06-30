@@ -228,7 +228,7 @@ void PointCloudMergerNodelet::sumPointCloud()
       }
     }
     addition_mutex_.unlock();
-    boost::this_thread::sleep(boost::posix_time::milliseconds(50));  // TODO(Maintainer) :reapply ratefreq.sleep
+    boost::this_thread::sleep(boost::posix_time::milliseconds(10));  // TODO(Maintainer) :reapply ratefreq.sleep
 #ifdef DEBUG
     iCycle++;
       if (iCycle == 25)

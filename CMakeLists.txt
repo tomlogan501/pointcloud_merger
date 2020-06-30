@@ -7,6 +7,8 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   sensor_msgs
+  pcl_conversions
+  pcl_ros
   tf2
   tf2_ros
   tf2_sensor_msgs
@@ -15,7 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES pointcloud_merger
-  CATKIN_DEPENDS message_filters nodelet roscpp rospy sensor_msgs tf2 tf2_ros tf2_sensor_msgs
+  CATKIN_DEPENDS message_filters nodelet roscpp rospy sensor_msgs tf2 tf2_ros tf2_sensor_msgs pcl_conversions pcl_ros
 )
 
 include_directories(
@@ -51,4 +53,29 @@ if(CATKIN_ENABLE_TESTING)
   find_package(roslint REQUIRED)
   roslint_cpp()
   roslint_add_test()
+endif()
+
+## Add gtest based cpp test target and link libraries
+if(CATKIN_ENABLE_TESTING)
+
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug" )
+        add_compile_definitions(DEBUG)
+    endif ()
+
+    #PCL REQUIREMENT
+    find_package(PCL 1.2 REQUIRED)
+
+    include_directories(${PCL_INCLUDE_DIRS})
+    link_directories(${PCL_LIBRARY_DIRS})
+    add_definitions(${PCL_DEFINITIONS})
+
+    catkin_add_gtest(${PROJECT_NAME}_test
+        test/test_pc_merger.cpp
+        test/test_pc_merger.h
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test/data)
+
+    target_link_libraries(  ${PROJECT_NAME}_test
+        ${PROJECT_NAME}
+        ${catkin_LIBRARIES}
+        ${PCL_LIBRARIES})
 endif()
