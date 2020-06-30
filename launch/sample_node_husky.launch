@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+
+<launch>
+    <!--param name="robot_description" command="$(find xacro)/xacro '$(find husky_description)/urdf/husky.urdf.xacro'" />
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+
+    <node pkg="tf" type="static_transform_publisher" name="rslidar" args="0 0 0 0 0 0 robosense rslidar  10"/>
+    <node pkg="tf" type="static_transform_publisher" name="zed" args="0 0 0 0 0 0 zed_cam1_optical zed_left_camera_frame  10"/-->
+
+    <node pkg="tf" type="static_transform_publisher" name="zed" args="0.1359 0.06 -0.0549 0 0 0 rslidar zed_left_camera_frame  100"/>
+
+
+    <node pkg="pointcloud_merger" type="pointcloud_merger_node" name="pointcloud_merger_node" >
+	<remap from="cloud1" to="/zed/zed_node/point_cloud/cloud_registered"/>
+	<remap from="cloud2" to="/rslidar_points"/>
+        <rosparam>
+            target_frame: zed_left_camera_frame # Leave disabled to output scan in pointcloud frame
+
+            # Concurrency level, affects number of pointclouds queued for processing, thread number governed by nodelet manager
+            # 0 : Detect number of cores
+            # 1 : Single threaded
+            # 2->inf : Parallelism level
+            concurrency_level: 0
+        </rosparam>
+
+    </node>
+
+</launch>

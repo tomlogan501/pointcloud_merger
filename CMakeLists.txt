@@ -1,12 +1,14 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0)
 project(pointcloud_merger)
 
 find_package(catkin REQUIRED COMPONENTS
-  laser_geometry
   message_filters
   nodelet
   roscpp
+  rospy
   sensor_msgs
+  pcl_conversions
+  pcl_ros
   tf2
   tf2_ros
   tf2_sensor_msgs
@@ -15,7 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES pointcloud_merger
-  CATKIN_DEPENDS laser_geometry message_filters nodelet roscpp sensor_msgs tf2 tf2_ros tf2_sensor_msgs
+  CATKIN_DEPENDS message_filters nodelet roscpp rospy sensor_msgs tf2 tf2_ros tf2_sensor_msgs pcl_conversions pcl_ros
 )
 
 include_directories(
@@ -48,7 +50,30 @@ install(DIRECTORY launch
 )
 
 if(CATKIN_ENABLE_TESTING)
-  find_package(roslint REQUIRED)
-  roslint_cpp()
-  roslint_add_test()
+    find_package(roslint REQUIRED)
+    roslint_cpp(src/pointcloud_merger_nodelet.cpp)
+    roslint_cpp(src/pointcloud_merger_node.cpp)
+    roslint_add_test()
+
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug" )
+        add_compile_definitions(DEBUG)
+    endif ()
+
+    #PCL REQUIREMENT
+    find_package(PCL 1.2 REQUIRED)
+    find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
+
+    include_directories(${PCL_INCLUDE_DIRS})
+    link_directories(${PCL_LIBRARY_DIRS})
+    add_definitions(${PCL_DEFINITIONS})
+
+    catkin_add_gtest(${PROJECT_NAME}_test
+        test/test_pc_merger.cpp
+        test/test_pc_merger.h
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
+
+    target_link_libraries(  ${PROJECT_NAME}_test
+        ${PROJECT_NAME}
+        ${catkin_LIBRARIES}
+        ${PCL_LIBRARIES})
 endif()
