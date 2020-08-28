@@ -46,8 +46,7 @@
 #include <string>
 #include <tf2_sensor_msgs/tf2_sensor_msgs.h>
 
-
-bool gSwitch = false;
+bool gResize = false;
 
 namespace pointcloud_merger
 {
@@ -55,13 +54,12 @@ PointCloudMergerNodelet::PointCloudMergerNodelet() {}
 
 void PointCloudMergerNodelet::onInit()
 {
-  boost::mutex::scoped_lock lock(connect_mutex_);
   private_nh_ = getPrivateNodeHandle();
   input_queue_size_ = 10;
   rateFreq_ = 30;  // Hz (max output frequency)
   iSizeCloud1Max_ = 0;
   iSizeCloud2Max_ = 0;
-  gSwitch = false;
+  gResize = false;
 
   // Init internal pointcloud
   cloud1RW_.reset(new sensor_msgs::PointCloud2);
@@ -69,8 +67,8 @@ void PointCloudMergerNodelet::onInit()
 
   private_nh_.param<std::string>("target_frame", target_frame_, "base_link");
   private_nh_.param<double>("transform_tolerance", tolerance_, 1);
-  private_nh_.param<std::string>("cloud1", cloud1_, "cloud1");
-  private_nh_.param<std::string>("cloud2", cloud2_, "cloud2");
+  private_nh_.param<std::string>("cloud1", cloud1_, "sensor1/depth/points");
+  private_nh_.param<std::string>("cloud2", cloud2_, "sensor2/depth/points");
   private_nh_.param<std::string>("cloud_out", cloud_out_, "cloud_out");
   int concurrency_level;
   private_nh_.param<int>("concurrency_level", concurrency_level, 1);
@@ -98,59 +96,93 @@ void PointCloudMergerNodelet::onInit()
 
   tf2_.reset(new tf2_ros::Buffer());
   tf2_listener_.reset(new tf2_ros::TransformListener(*tf2_));
-  message_filter1_.reset(
-    new MessageFilter(sub1_, *tf2_, target_frame_, input_queue_size_, nh_));
-  message_filter2_.reset(
-    new MessageFilter(sub2_, *tf2_, target_frame_, input_queue_size_, nh_));
-
-  message_filter1_->registerCallback(
-    boost::bind(&PointCloudMergerNodelet::cloudCb1, this, _1));
-  message_filter1_->registerFailureCallback(
-    boost::bind(&PointCloudMergerNodelet::failureCb1, this, _1, _2));
-
-  message_filter2_->registerCallback(
-    boost::bind(&PointCloudMergerNodelet::cloudCb2, this, _1));
-  message_filter2_->registerFailureCallback(
-    boost::bind(&PointCloudMergerNodelet::failureCb2, this, _1, _2));
 
   pub_ = nh_.advertise<sensor_msgs::PointCloud2>(
-           cloud_out_, 10, boost::bind(&PointCloudMergerNodelet::connectCb, this),
+           cloud_out_, 1, boost::bind(&PointCloudMergerNodelet::connectCb, this),
            boost::bind(&PointCloudMergerNodelet::disconnectCb, this));
 }
 
-void PointCloudMergerNodelet::sumPointCloud()
+void PointCloudMergerNodelet::connectCb()
 {
-  ros::Rate Rate(rateFreq_);
-  sensor_msgs::PointCloud2 output;
-
-  bool bResize = false;
-
-#ifdef DEBUG
-  boost::chrono::high_resolution_clock::time_point t1;
-  boost::chrono::high_resolution_clock::time_point t2;
-  boost::chrono::milliseconds sumGlobal;
-  int iCycle = 0;
-#endif
-
-  while (pub_.getNumSubscribers() > 0)
+  if (pub_.getNumSubscribers() > 0 &&
+      sub1_.getSubscriber().getNumPublishers() == 0)
   {
-#ifdef DEBUG
-      t2 = boost::chrono::high_resolution_clock::now();
-      sumGlobal += (boost::chrono::duration_cast<boost::chrono::milliseconds>(t2-t1));
-      t1 = boost::chrono::high_resolution_clock::now();
-#endif
+    NODELET_INFO(
+      "Got a subscriber to scan, starting subscriber to pointcloud 1");
+    sub1_.subscribe(nh_, cloud1_, input_queue_size_);
+  }
+
+  if (pub_.getNumSubscribers() > 0 &&
+      sub2_.getSubscriber().getNumPublishers() == 0)
+  {
+    NODELET_INFO(
+      "Got a subscriber to scan, starting subscriber to pointcloud 2");
+    sub2_.subscribe(nh_, cloud2_, input_queue_size_);
+  }
+
+  sync_ = new message_filters::TimeSynchronizer<PointCloud2, PointCloud2>(sub1_, sub2_, 2);
+  sync_->registerCallback(boost::bind(&PointCloudMergerNodelet::callbackSync, this, _1, _2));
+}
+
+void PointCloudMergerNodelet::disconnectCb()
+{
+  if (pub_.getNumSubscribers() == 0)
+  {
+    NODELET_INFO("No subscribers , shutting down subscriber to pointclouds");
+    sub1_.unsubscribe();
+    sub2_.unsubscribe();
+  }
+}
+
+void PointCloudMergerNodelet::callbackSync(const PointCloud2ConstPtr &cloud_msg1,
+              const PointCloud2ConstPtr &cloud_msg2)
+{
+    if (!(target_frame_ == cloud_msg1->header.frame_id))
+    {
+      try
+      {
+        tf2_->transform(*cloud_msg1, *cloud1RW_, target_frame_,
+                        ros::Duration(tolerance_));
+        cloud1RW_->header.frame_id = target_frame_;
+      }
+      catch (tf2::TransformException &ex)
+      {
+        NODELET_ERROR_STREAM("Transform cloud 1 failure: " << ex.what());
+      }
+    }
+    else
+    {
+      *cloud1RW_ = *cloud_msg1;
+    }
+
+    if (!(target_frame_ == cloud_msg2->header.frame_id))
+    {
+      try
+      {
+        tf2_->transform(*cloud_msg2, *cloud2RW_, target_frame_,
+                        ros::Duration(tolerance_));
+        cloud2RW_->header.frame_id = target_frame_;
+      }
+      catch (tf2::TransformException &ex)
+      {
+        NODELET_ERROR_STREAM("Transform cloud2 failure: " << ex.what());
+      }
+    }
+    else
+    {
+      *cloud2RW_ = *cloud_msg2;
+    }
 
     // for fields setup
-    sensor_msgs::PointCloud2Modifier modifier(output);
+    sensor_msgs::PointCloud2Modifier modifier(output_);
     modifier.setPointCloud2FieldsByString(1, "xyz");
 
-    addition_mutex_.lock();
     if (cloud1RW_ != 0 && cloud2RW_ != 0)
     {
       if ((cloud1RW_->width != 0) && (cloud2RW_->width != 0))
       {
-        output.header.frame_id = target_frame_;
-        output.header.stamp = ros::Time::now();
+        output_.header.frame_id = target_frame_;
+        output_.header.stamp = ros::Time::now();
 
         int iSizeCloud1 = cloud1RW_->width * cloud1RW_->height;
 
@@ -159,7 +191,7 @@ void PointCloudMergerNodelet::sumPointCloud()
           NODELET_INFO("Cloud 1 change size %d --> %d", iSizeCloud1Max_,
                        iSizeCloud1);
           iSizeCloud1Max_ = iSizeCloud1;
-          bResize = false;
+          gResize = false;
         }
 
         int iSizeCloud2 = cloud2RW_->width *  cloud2RW_->height;
@@ -169,25 +201,25 @@ void PointCloudMergerNodelet::sumPointCloud()
           NODELET_INFO("Cloud 2 change size %d --> %d", iSizeCloud2Max_,
                        iSizeCloud2);
           iSizeCloud2Max_ = iSizeCloud2;
-          bResize = false;
+          gResize = false;
         }
 
-        output.width = iSizeCloud1Max_ + iSizeCloud2Max_;
-        output.height = 1;
-        output.is_bigendian = cloud1RW_->is_bigendian;
-        output.is_dense = cloud1RW_->is_dense;  // there may be invalid points
+        output_.width = iSizeCloud1Max_ + iSizeCloud2Max_;
+        output_.height = 1;
+        output_.is_bigendian = cloud1RW_->is_bigendian;
+        output_.is_dense = cloud1RW_->is_dense;  // there may be invalid points
 
-        if (bResize == false)
+        if (gResize == false)
         {
-          modifier.resize(output.width);
-          bResize = true;
-          NODELET_INFO("Output cloud resized : %d", output.width * output.height);
+          modifier.resize(output_.width);
+          gResize = true;
+          NODELET_INFO("Output cloud resized : %d", output_.width * output_.height);
         }
 
         // Lets copy every XYZ
-        sensor_msgs::PointCloud2Iterator<float> out_x(output, "x");
-        sensor_msgs::PointCloud2Iterator<float> out_y(output, "y");
-        sensor_msgs::PointCloud2Iterator<float> out_z(output, "z");
+        sensor_msgs::PointCloud2Iterator<float> out_x(output_, "x");
+        sensor_msgs::PointCloud2Iterator<float> out_y(output_, "y");
+        sensor_msgs::PointCloud2Iterator<float> out_z(output_, "z");
 
         sensor_msgs::PointCloud2Iterator<float> c1_x(*cloud1RW_, "x");
         sensor_msgs::PointCloud2Iterator<float> c1_y(*cloud1RW_, "y");
@@ -224,143 +256,9 @@ void PointCloudMergerNodelet::sumPointCloud()
           ++c2_y;
           ++c2_z;
         }
-        pub_.publish(output);
+        pub_.publish(output_);
       }
     }
-    addition_mutex_.unlock();
-    boost::this_thread::sleep(boost::posix_time::milliseconds(50));  // TODO(Maintainer) :reapply ratefreq.sleep
-#ifdef DEBUG
-    iCycle++;
-      if (iCycle == 25)
-      {
-          iCycle = 0;
-          sumGlobal /= 25;
-
-          // NODELET_INFO("Temps de traitement en milliseconde %d", (int)sumGlobal.count());
-          sumGlobal -= sumGlobal;  // reset
-      }
-#endif
-  }
-  NODELET_INFO("Leaving Publisher");
-}
-
-void PointCloudMergerNodelet::connectCb()
-{
-  boost::mutex::scoped_lock lock(connect_mutex_);
-  if (pub_.getNumSubscribers() > 0 &&
-      sub1_.getSubscriber().getNumPublishers() == 0)
-  {
-    NODELET_INFO(
-      "Got a subscriber to scan, starting subscriber to pointcloud 1");
-    sub1_.subscribe(nh_, cloud1_, input_queue_size_);
-  }
-
-  if (pub_.getNumSubscribers() > 0 &&
-      sub2_.getSubscriber().getNumPublishers() == 0)
-  {
-    NODELET_INFO(
-      "Got a subscriber to scan, starting subscriber to pointcloud 2");
-    sub2_.subscribe(nh_, cloud2_, input_queue_size_);
-  }
-
-  // Launching addition thread
-  addition_thread_ =
-    boost::thread(boost::bind(&PointCloudMergerNodelet::sumPointCloud, this));
-}
-
-void PointCloudMergerNodelet::disconnectCb()
-{
-  boost::mutex::scoped_lock lock(connect_mutex_);
-
-  addition_thread_.join();
-
-  if (pub_.getNumSubscribers() == 0)
-  {
-    NODELET_INFO("No subscribers , shutting down subscriber to pointclouds");
-    sub1_.unsubscribe();
-    sub2_.unsubscribe();
-    cloud1_mutex_.unlock();
-    cloud2_mutex_.unlock();
-    gSwitch = true;
-    boost::this_thread::sleep(boost::posix_time::milliseconds(100));
-    gSwitch = false;
-  }
-}
-
-void PointCloudMergerNodelet::failureCb1(
-  const sensor_msgs::PointCloud2ConstPtr &cloud_msg,
-  tf2_ros::filter_failure_reasons::FilterFailureReason reason)
-{
-  NODELET_WARN_STREAM_THROTTLE(
-    1.0, "Can't transform pointcloud from frame "
-    << cloud_msg->header.frame_id << " to "
-    << message_filter1_->getTargetFramesString() << " at time "
-    << cloud_msg->header.stamp << ", reason: " << reason);
-}
-
-void PointCloudMergerNodelet::failureCb2(
-  const sensor_msgs::PointCloud2ConstPtr &cloud_msg,
-  tf2_ros::filter_failure_reasons::FilterFailureReason reason)
-{
-  NODELET_WARN_STREAM_THROTTLE(
-    1.0, "Can't transform pointcloud from frame "
-    << cloud_msg->header.frame_id << " to "
-    << message_filter2_->getTargetFramesString() << " at time "
-    << cloud_msg->header.stamp << ", reason: " << reason);
-}
-void PointCloudMergerNodelet::cloudCb1(
-  const sensor_msgs::PointCloud2ConstPtr &cloud_msg)
-{
-  if (gSwitch != false ) return;
-  boost::mutex::scoped_try_lock lock(cloud1_mutex_);
-
-  addition_mutex_.lock();
-  if (!(target_frame_ == cloud_msg->header.frame_id))
-  {
-    try
-    {
-      tf2_->transform(*cloud_msg, *cloud1RW_, target_frame_,
-                      ros::Duration(tolerance_));
-      cloud1RW_->header.frame_id = target_frame_;
-    }
-    catch (tf2::TransformException &ex)
-    {
-      NODELET_ERROR_STREAM("Transform failure: " << ex.what());
-    }
-  }
-  else
-  {
-    *cloud1RW_ = *cloud_msg;
-  }
-
-  gSwitch = true;
-}
-
-void PointCloudMergerNodelet::cloudCb2(
-  const sensor_msgs::PointCloud2ConstPtr &cloud_msg)
-{
-  if (gSwitch != true ) return;
-  boost::mutex::scoped_try_lock lock(cloud2_mutex_);
-
-  if (!(target_frame_ == cloud_msg->header.frame_id))
-  {
-    try
-    {
-      tf2_->transform(*cloud_msg, *cloud2RW_, target_frame_,
-                      ros::Duration(tolerance_));
-      cloud2RW_->header.frame_id = target_frame_;
-    }
-    catch (tf2::TransformException &ex)
-    {
-      NODELET_ERROR_STREAM("Transform failure: " << ex.what());
-    }
-  }
-  else
-  {
-    *cloud2RW_ = *cloud_msg;
-  }
-  gSwitch = false;
-  addition_mutex_.unlock();
 }
 
 }  // namespace pointcloud_merger
