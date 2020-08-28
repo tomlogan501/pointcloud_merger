@@ -6,14 +6,22 @@
     <arg name="world_name" value="$(find pointcloud_merger)/$(arg world_name)"/> 
     <arg name="paused" value="false"/>
     <arg name="use_sim_time" value="true"/>
+<<<<<<< HEAD
+/bin/bash: q : commande introuvable
+    <arg name="headless" value="false"/>
+=======
     <arg name="gui" value="false"/>
     <arg name="headless" value="true"/>
+>>>>>>> master
     <arg name="debug" value="false"/>
   </include>
 
   <param name="robot_description" command="$(find xacro)/xacro '$(find pointcloud_merger)/models/combo.urdf.xacro'" />
 
+<<<<<<< HEAD
+=======
     <!-- Spawn robot in gazebo -->
+>>>>>>> master
     <node name="spawn" pkg="gazebo_ros" type="spawn_model"
         args="-x 0
               -y 0
@@ -28,8 +36,16 @@
 
   <node pkg="pointcloud_merger" type="pointcloud_merger_node"
       name="pointcloud_merger_node" >
+<<<<<<< HEAD
+
+  	<remap from="cloud1" to="/sensor1/depth/points"/>
+	<remap from="cloud2" to="/sensor2/depth/points"/>
+        <rosparam>
+          target_frame: base_link # Leave disabled to output scan in pointcloud frame
+=======
         <rosparam>
           target_frame: zed_optical_frame # Leave disabled to output scan in pointcloud frame
+>>>>>>> master
         # Concurrency level, affects number of pointclouds queued for processing, thread number governed by nodelet manager
         # 0 : Detect number of cores
         # 1 : Single threaded
@@ -37,7 +53,11 @@
           concurrency_level: 0
         </rosparam>
   </node>
+<<<<<<< HEAD
+  <test  test-name="test" pkg="pointcloud_merger"
+=======
   <test test-name="integrationtest" pkg="pointcloud_merger"
+>>>>>>> master
   type="pointcloud_merger_test" >
   	<remap from="cloud1" to="/sensor1/depth/points"/>
 	<remap from="cloud2" to="/sensor2/depth/points"/>

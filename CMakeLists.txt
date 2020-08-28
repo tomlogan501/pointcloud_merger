@@ -62,6 +62,7 @@ if(CATKIN_ENABLE_TESTING)
     #PCL REQUIREMENT
     find_package(PCL 1.2 REQUIRED)
     find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
+    find_package(rostest REQUIRED)
 
     include_directories(${PCL_INCLUDE_DIRS})
     link_directories(${PCL_LIBRARY_DIRS})

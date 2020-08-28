@@ -11,10 +11,17 @@
 
 
     <node pkg="pointcloud_merger" type="pointcloud_merger_node" name="pointcloud_merger_node" >
+<<<<<<< HEAD
+	<remap from="cloud1" to="/zed/depth/points"/>
+	<remap from="cloud2" to="/rslidar_points"/>
+        <rosparam>
+            target_frame: rslidar # Leave disabled to output scan in pointcloud frame
+=======
 	<remap from="cloud1" to="/zed/zed_node/point_cloud/cloud_registered"/>
 	<remap from="cloud2" to="/rslidar_points"/>
         <rosparam>
             target_frame: zed_left_camera_frame # Leave disabled to output scan in pointcloud frame
+>>>>>>> master
 
             # Concurrency level, affects number of pointclouds queued for processing, thread number governed by nodelet manager
             # 0 : Detect number of cores
