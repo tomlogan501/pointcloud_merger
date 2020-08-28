@@ -7,19 +7,11 @@ RUN /bin/bash -c 'cd /root/catkin_ws'
 #Copy code
 COPY . root/catkin_ws/src/pointcloud_merger
 
-#Get the coverage package source code 
-#RUN git clone http://git-u2is.ensta.fr/u2is/code_coverage.git root/catkin_ws/src/code_coverage
-
-#Get lint
-#RUN git clone http://git-u2is.ensta.fr/u2is/roslint.git root/catkin_ws/src/roslint
-
-#For coverage
-#RUN apt-get update && apt-get install -y lcov
-
-RUN apt-get update && apt-get install -y ros-kinetic-tf2-sensor-msgs ros-kinetic-roslint
+RUN apt-get update && apt-get install -y ros-kinetic-tf2-sensor-msgs ros-kinetic-roslint qtbase5-dev
 
 #Launch the compile
 RUN /bin/bash -c ' source /opt/ros/kinetic/setup.bash \
 	&& cd root/catkin_ws\
 	&& catkin_make\
+	&& catkin_make run_tests\
 	&& catkin_make roslint_pointcloud_merger'

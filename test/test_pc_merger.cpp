@@ -2,9 +2,12 @@
 #include <iostream>
 #include <string>
 
+<<<<<<< HEAD
 #include <unistd.h>
 #include <stdio.h>
 
+=======
+>>>>>>> master
 // ROS
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl_ros/point_cloud.h>
