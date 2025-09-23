@@ -1,0 +1,13 @@
+<library path="lib/libpointcloud_merger">
+
+  <class 
+    name="pointcloud_merger/pointcloud_merger_composable"
+	  type="pointcloud_merger::PointCloudMergerComposable"
+	  base_class_type="rclcpp::Node">
+    <description>
+      Composable node to merge 2 pointclouds2 into one
+    </description>
+  </class>
+
+</library>
+

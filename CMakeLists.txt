@@ -1,80 +1,81 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.5)
 project(pointcloud_merger)
 
-find_package(catkin REQUIRED COMPONENTS
-  message_filters
-  nodelet
-  roscpp
-  rospy
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(rclcpp_components REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(message_filters REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2_sensor_msgs REQUIRED)
+
+include_directories(include)
+
+add_library(pointcloud_merger SHARED
+  src/pointcloud_merger_composable.cpp
+)
+
+ament_target_dependencies(pointcloud_merger
+  rclcpp
   sensor_msgs
-  pcl_conversions
-  pcl_ros
+  message_filters
+  tf2
+  tf2_ros
+  tf2_sensor_msgs
+  rclcpp_components
+)
+
+rclcpp_components_register_node(
+    pointcloud_merger
+    PLUGIN "pointcloud_merger::PointCloudMergerComposable"
+    EXECUTABLE pointcloud_merger_plugin
+)
+
+ament_export_targets(export_pointcloud_merger)
+
+add_executable(pointcloud_merger_node
+  src/pointcloud_merger_node.cpp
+)
+
+ament_target_dependencies(pointcloud_merger_node
+  rclcpp
+  sensor_msgs
+  message_filters
   tf2
   tf2_ros
   tf2_sensor_msgs
 )
 
-catkin_package(
-  INCLUDE_DIRS include
-  LIBRARIES pointcloud_merger
-  CATKIN_DEPENDS message_filters nodelet roscpp rospy sensor_msgs tf2 tf2_ros tf2_sensor_msgs pcl_conversions pcl_ros
-)
-
-include_directories(
-  include
-  ${catkin_INCLUDE_DIRS}
-)
-
-add_library(pointcloud_merger src/pointcloud_merger_nodelet.cpp)
-target_link_libraries(pointcloud_merger ${catkin_LIBRARIES})
-
-add_executable(pointcloud_merger_node src/pointcloud_merger_node.cpp)
-target_link_libraries(pointcloud_merger_node pointcloud_merger ${catkin_LIBRARIES})
-
-install(TARGETS
+target_link_libraries(pointcloud_merger_node
   pointcloud_merger
-  pointcloud_merger_node
-	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
+)
+
+install(TARGETS pointcloud_merger
+  EXPORT export_pointcloud_merger
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)
+
+install(TARGETS pointcloud_merger_node
+  DESTINATION lib/${PROJECT_NAME}
+)
 
 install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-)
-install(FILES nodelets.xml
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+  DESTINATION include/${PROJECT_NAME}
 )
 
-install(DIRECTORY launch
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+install(FILES pointcloud_merger.xml
+  DESTINATION share/${PROJECT_NAME}
 )
 
-if(CATKIN_ENABLE_TESTING)
-    find_package(roslint REQUIRED)
-    roslint_cpp(src/pointcloud_merger_nodelet.cpp)
-    roslint_cpp(src/pointcloud_merger_node.cpp)
-    roslint_add_test()
+install(DIRECTORY config/ DESTINATION share/${PROJECT_NAME}/config)
+install(DIRECTORY launch/ DESTINATION share/${PROJECT_NAME}/launch)
 
-    if (CMAKE_BUILD_TYPE STREQUAL "Debug" )
-        add_compile_definitions(DEBUG)
-    endif ()
+ament_export_dependencies(rclcpp)
 
-    #PCL REQUIREMENT
-    find_package(PCL 1.2 REQUIRED)
-    find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
-    find_package(rostest REQUIRED)
-
-    include_directories(${PCL_INCLUDE_DIRS})
-    link_directories(${PCL_LIBRARY_DIRS})
-    add_definitions(${PCL_DEFINITIONS})
-
-    catkin_add_gtest(${PROJECT_NAME}_test
-        test/test_pc_merger.cpp
-        test/test_pc_merger.h
-        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
-
-    target_link_libraries(  ${PROJECT_NAME}_test
-        ${PROJECT_NAME}
-        ${catkin_LIBRARIES}
-        ${PCL_LIBRARIES})
-endif()
+ament_package()

@@ -10,17 +10,17 @@ Package to combine 2 PointCloud2 in one with a target frame.
 * ```cloud_out``` output topic name. Default ```cloud_out```
 * ```cloud1``` input topic name. Default ```cloud1```
 * ```cloud2``` input topic name. Default ```cloud2```
-* ```transform_tolerance``` TF tolerance. Default ```1```
-* ```concurrency_level``` Nodelet thread support. Default ```1```
+* ```input_queue_size``` Qos settings. Default ```10```
+* ```max_interval_duration``` Max interval (s) between 2 pointclouds. Default ```0.2```
 
 # Features
-* Nodelet support
+* Composable node support
 
-# Known Issues
-  Due to constant resize of PointCloud2, crash can occur.
-  In that case,compile in debug mode '-DCMAKE_BUILD_TYPE=Debug', launch the debug launch file and create a merge request with test data (gdb knowledge required)
+# Example minimal launch
+Node:
 
-  ```roslaunch pointcloud_merger sample_node_debug.launch```
+```ros2 launch pointcloud_merger pointcloud_merger_node.launch.py```
 
-# Example Gazebo Robot
-```roslaunch pointcloud_merger sample_node.launch```
+Composable:
+
+```ros2 launch pointcloud_merger pointcloud_merger_composable.launch.py```

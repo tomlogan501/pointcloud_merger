@@ -1,0 +1,8 @@
+/livox/pointcloud_merger:
+  ros__parameters:
+    target_frame: base_link
+    cloud1: /livox/front_lidar/points
+    cloud2: /livox/back_lidar/points
+    cloud_out: /merged_pointcloud
+    input_queue_size: 10
+    max_interval_duration: 0.2
